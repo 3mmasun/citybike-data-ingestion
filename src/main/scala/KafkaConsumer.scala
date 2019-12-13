@@ -2,12 +2,14 @@
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.spark._
 import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.types._
+import org.apache.spark.sql.DataFrame
 import org.apache.spark.streaming._
 import org.apache.spark.streaming.kafka010.ConsumerStrategies.Subscribe
 import org.apache.spark.streaming.kafka010.LocationStrategies.PreferConsistent
 import org.apache.spark.streaming.kafka010._
 import org.apache.kafka.common.serialization.{StringDeserializer}
-
+import org.apache.spark.sql.functions._
 
 object KafkaConsumer {
   def main(args: Array[String]): Unit = {
@@ -42,13 +44,23 @@ object KafkaConsumer {
       .option("kafka.bootstrap.servers", "localhost:9092")
       .option("subscribe", "test")
       .option("startingOffsets", "{\"test\":{\"0\":895}}")
-      .option("kafka.key.deserializer", classOf[StringDeserializer].getName)
+//      .option("kafka.key.deserializer", classOf[StringDeserializer].getName)
       .load()
+      .selectExpr("CAST(value AS STRING) as raw_payload")
+//      .withColumn("date", date_format(current_date(), "yyyy-MM-dd"))
 
+    topicDF.printSchema()
+
+//    val personDF = topicDF.selectExpr("CAST(value AS STRING)")
+//
+//    val schema = new StructType()
+//      .add("id",IntegerType)
+//      .add("firstname",StringType)
+//
+//    val personDF = personDF.select(from_json(col("value").cast("string"), schema).as("data"))
+//      .select("data.*")
     val results = topicDF.collect()
-    printf("AAAAAAAAAAAAAAAAAAA")
     results.map(print)
-    printf("BBBBBBBBBBBBBBBBBBB")
   }
 
 }
