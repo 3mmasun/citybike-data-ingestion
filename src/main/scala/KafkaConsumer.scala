@@ -14,7 +14,7 @@ object KafkaConsumer {
       .option("startingOffsets", "{\"test\":{\"0\":895}}")
       .load()
 
-    val schema = new StructType()
+    val networkSchema = new StructType()
       .add("company", ArrayType(StringType))
       .add("gbfs_href",StringType)
       .add("href",StringType)
@@ -24,7 +24,8 @@ object KafkaConsumer {
         .add("city",StringType)
         .add("country", StringType)
         .add("latitude", FloatType)
-        .add("longitude", FloatType))
+        .add("longitude", FloatType)
+      )
       .add("name",StringType)
       .add("stations", ArrayType(
         new StructType()
@@ -36,22 +37,26 @@ object KafkaConsumer {
         .add("longitude", FloatType)
         .add("name", StringType)
         .add("timestamp", StringType)
-        .add("extra",
-          new StructType()
-            .add("last_updated", IntegerType)
-            .add("renting", ShortType)
-            .add("returning", ShortType)
-            .add("uid", StringType)
-            .add("address", StringType)
-          )
+//        .add("extra",
+//          new StructType()
+//            .add("last_updated", IntegerType)
+//            .add("renting", ShortType)
+//            .add("returning", ShortType)
+//            .add("uid", StringType)
+//            .add("address", StringType)
+//          )
         )
       )
 
 //    import spark.implicits._
     val results = topicDF
-      .select(from_json(col("value").cast("string"), schema).as("data"))
-      .select("data.stations")
+      .select(from_json(col("value").cast("string"), networkSchema).as("city"))
+
     results.show()
+
+    results
+      .write.mode(SaveMode.Overwrite)
+      .parquet("/Users/sgemma.sun/hadoop-3.1.3/" + "user/emma/citibike")
   }
 
 }
