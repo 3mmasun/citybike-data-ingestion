@@ -1,5 +1,7 @@
 
-import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql._
+import org.apache.spark.sql.types._
+import org.apache.spark.sql.functions._
 
 object KafkaConsumer {
   def main(args: Array[String]): Unit = {
@@ -11,12 +13,45 @@ object KafkaConsumer {
       .option("subscribe", "test")
       .option("startingOffsets", "{\"test\":{\"0\":895}}")
       .load()
-      .selectExpr("CAST(value AS STRING) as raw_payload")
 
-    topicDF.printSchema()
+    val schema = new StructType()
+      .add("company", ArrayType(StringType))
+      .add("gbfs_href",StringType)
+      .add("href",StringType)
+      .add("id",StringType)
+      .add("location",
+        new StructType()
+        .add("city",StringType)
+        .add("country", StringType)
+        .add("latitude", FloatType)
+        .add("longitude", FloatType))
+      .add("name",StringType)
+      .add("stations", ArrayType(
+        new StructType()
+        .add("empty_slots", ShortType)
+        .add("free_bikes",ShortType)
+        .add("id",StringType)
+        .add("free_bikes",ShortType)
+        .add("latitude", FloatType)
+        .add("longitude", FloatType)
+        .add("name", StringType)
+        .add("timestamp", StringType)
+        .add("extra",
+          new StructType()
+            .add("last_updated", IntegerType)
+            .add("renting", ShortType)
+            .add("returning", ShortType)
+            .add("uid", StringType)
+            .add("address", StringType)
+          )
+        )
+      )
 
-    val results = topicDF.collect()
-    results.map(print)
+//    import spark.implicits._
+    val results = topicDF
+      .select(from_json(col("value").cast("string"), schema).as("data"))
+      .select("data.stations")
+    results.show()
   }
 
 }
