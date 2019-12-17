@@ -32,7 +32,6 @@ object KafkaConsumer {
         .add("empty_slots", ShortType)
         .add("free_bikes",ShortType)
         .add("id",StringType)
-        .add("free_bikes",ShortType)
         .add("latitude", FloatType)
         .add("longitude", FloatType)
         .add("name", StringType)
@@ -48,15 +47,31 @@ object KafkaConsumer {
         )
       )
 
-//    import spark.implicits._
-    val results = topicDF
-      .select(from_json(col("value").cast("string"), networkSchema).as("city"))
+    val results = topicDF.select(from_json(col("value").cast("string"), networkSchema)
+      .as("city"))
+        .select("city.*")
 
     results.show()
 
+//    import spark.implicits._
+//    val someDF = Seq(
+//      (8, "bat"),
+//      (64, "mouse"),
+//      (-27, "horse")
+//    ).toDF("number", "word");
+//
+//
     results
-      .write.mode(SaveMode.Overwrite)
-      .parquet("/Users/sgemma.sun/hadoop-3.1.3/" + "user/emma/citibike")
+      .write
+      .mode(SaveMode.Overwrite)
+      .parquet("hdfs://localhost:9000/parquet_data")
+
+
+    val df_parquet = spark
+      .read
+      .parquet("hdfs://localhost:9000/parquet_data")
+
+    df_parquet.show()
   }
 
 }
